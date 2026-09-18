@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beratungsprotokoll · Finanzcheck GmbH</title>
+<meta name="description" content="Digitales Beratungsprotokoll der Finanzcheck GmbH – Risiko-Check, Entscheidung, Unterschrift, PDF direkt an Ihren Berater.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --navy:#10284a; --navy-2:#1b3d6e; --ink:#1c2330; --muted:#5b6573; --line:#d9dee6; --line-2:#e8ecf2;
+  --bg:#f5f6f8; --card:#fff; --accent:#e5811a; --accent-dark:#c96f10;
+  --green:#1f8a55; --amber:#c98a00; --red:#c43d36; --grey:#7d8794;
+  --green-bg:#eef7f1; --amber-bg:#fbf5e6; --red-bg:#fbeeed; --grey-bg:#f0f2f5;
+  --r:6px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;padding-bottom:100px;font-size:15px}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.25;font-weight:600}
+p{margin:0 0 .6em}
+.hidden{display:none!important}
+
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px}
+.topbar-inner{max-width:800px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.brand{flex:1;min-width:0}
+.brand .firm{font-weight:600;font-size:15px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{max-width:800px;margin:10px auto 0;display:flex;gap:4px}
+.progress span{flex:1;height:3px;background:var(--line-2)}
+.progress span.done{background:var(--navy)}
+.progress span.cur{background:var(--accent)}
+
+.wrap{max-width:800px;margin:0 auto;padding:22px 16px}
+.step{display:none}
+.step.active{display:block}
+.kicker{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.step h2,.cockpit h2{font-size:22px;color:var(--navy);margin-bottom:6px}
+.lead{color:var(--muted);font-size:15px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.card h3{font-size:15px;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line-2)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:13px;font-weight:500;color:var(--muted)}
+.field label .req{color:var(--red)}
+.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:#fff;font-size:16px;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy-2);box-shadow:0 0 0 2px rgba(27,61,110,.12)}
+.field textarea{min-height:84px;resize:vertical;line-height:1.45}
+.field .hint{font-size:12px;color:var(--muted)}
+.field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--red);background:#fffafa}
+.field.invalid label{color:var(--red)}
+.full{grid-column:1/-1}
+
+.intro{display:grid;grid-template-columns:1.4fr 1fr;gap:0;border:1px solid var(--line);border-radius:var(--r);background:#fff;margin-bottom:18px;overflow:hidden}
+.intro>div{padding:18px 20px}
+.intro .l{border-right:1px solid var(--line-2)}
+.intro h2{font-size:20px;color:var(--navy);margin-bottom:6px}
+.intro p{font-size:14px;color:var(--muted);margin:0}
+.intro .r{background:#fafbfc}
+.intro .r .lab{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.intro .r b{display:block;color:var(--navy);font-size:15px}
+.intro .r span{font-size:13px;color:var(--muted);display:block}
+@media (max-width:600px){.intro{grid-template-columns:1fr}.intro .l{border-right:0;border-bottom:1px solid var(--line-2)}}
+
+.errbox{display:none;background:var(--red-bg);border:1px solid #edc9c6;color:#8d2a24;border-radius:var(--r);padding:12px 14px;font-size:14px;margin-bottom:14px}
+.errbox.show{display:block}
+
+.toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:#fafbfc;margin-bottom:12px;font-size:14px}
+.toggle input{width:18px;height:18px;accent-color:var(--navy);margin:0}
+.toggle span{color:var(--muted);font-size:13px}
+
+.choice{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;background:#fff;display:flex;gap:12px;align-items:flex-start}
+.choice:hover{border-color:#aeb8c6}
+.choice.on{border-color:var(--navy);background:#f4f7fb}
+.choice .chk{width:18px;height:18px;border-radius:50%;border:1.5px solid #aeb8c6;flex:none;margin-top:2px;position:relative}
+.choice.on .chk{border-color:var(--navy);background:var(--navy)}
+.choice.on .chk:after{content:"";position:absolute;left:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#fff}
+.choice .t{font-weight:600;color:var(--navy);font-size:15px}
+.choice .d{font-size:13px;color:var(--muted);margin-top:2px}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.yesno{grid-template-columns:1fr}}
+.yesno.invalid .choice{border-color:var(--red)}
+
+/* Risiko-Check */
+.cat{margin-bottom:22px}
+.cat-head{margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--navy)}
+.cat-head h3{font-size:16px;color:var(--navy);margin:0}
+.cat-head p{margin:0;font-size:13px;color:var(--muted)}
+.risk{background:#fff;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.risk.st-ok{border-left-color:var(--green)} .risk.st-check{border-left-color:var(--amber)} .risk.st-need{border-left-color:var(--red)} .risk.st-none{border-left-color:var(--grey);background:#fafbfc}
+.risk .name{font-weight:600;font-size:15px;color:var(--navy)}
+.risk .why{font-size:13px;color:var(--muted);margin-top:1px}
+.prow{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.prow .plab{font-size:13px;font-weight:600;color:var(--navy);min-width:80px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;flex:1;min-width:260px}
+.seg button{border:0;border-right:1px solid var(--line);background:#fff;padding:9px 4px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:#f4f6f9;color:var(--ink)}
+.seg button.on{color:#fff;font-weight:600}
+.seg button.b-ok.on{background:var(--green)} .seg button.b-check.on{background:var(--amber)} .seg button.b-need.on{background:var(--red)} .seg button.b-none.on{background:var(--grey)}
+@media (max-width:480px){.seg{grid-template-columns:repeat(2,1fr)}.seg button:nth-child(2){border-right:0}.seg button:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.pinfo{display:none;margin-top:8px}
+.pinfo.show{display:block}
+.pinfo input{border:1px solid var(--line);border-radius:var(--r);padding:8px 11px;font-size:14px;width:100%;background:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:16px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;display:inline-block}
+.counts{display:flex;gap:0;border:1px solid var(--line);border-radius:var(--r);background:#fff;margin-bottom:14px;overflow:hidden}
+.counts div{flex:1;padding:8px 6px;text-align:center;border-right:1px solid var(--line-2);font-size:12px;color:var(--muted)}
+.counts div:last-child{border-right:0}
+.counts b{display:block;font-size:18px;color:var(--navy);font-weight:600}
+
+/* Ergebnis */
+.result{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;font-size:14px;background:#fff}
+.result.need{border-left-color:var(--red)} .result.check{border-left-color:var(--amber)} .result.ok{border-left-color:var(--green)} .result.neutral{border-left-color:var(--navy)}
+.result h4{margin:0 0 6px;font-size:14px;color:var(--navy)}
+.result ul{margin:0;padding-left:18px}
+.result li{margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:5px 10px;font-size:13px;cursor:pointer;color:var(--navy)}
+.chips button:hover{border-color:var(--navy)}
+.consent{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;background:#fafbfc}
+.consent input{width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--navy)}
+.consent p{font-size:13px;color:var(--muted);margin:0}
+.consent.invalid{border-color:var(--red)}
+
+/* Signatur */
+.sig-wrap{position:relative;border:1px solid var(--line);border-radius:var(--r);background:#fff;overflow:hidden;touch-action:none}
+.sig-wrap canvas{display:block;width:100%;height:180px;touch-action:none;cursor:crosshair}
+.sig-wrap .sigline{position:absolute;left:20px;right:20px;bottom:40px;border-bottom:1px solid #c5ccd6;pointer-events:none}
+.sig-wrap .sighint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:12px;color:#a3acb8;pointer-events:none}
+.sig-wrap.signed{border-color:var(--green)}
+.sig-wrap.invalid{border-color:var(--red)}
+.sig-tools{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px}
+.sig-tools .name{font-size:13px;color:var(--muted)}
+.linkbtn{background:none;border:0;color:var(--navy-2);font-weight:500;cursor:pointer;font-size:13px;padding:4px 6px;text-decoration:underline}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:600px){.actions{grid-template-columns:1fr}}
+.bigbtn{border:1px solid transparent;border-radius:var(--r);padding:14px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;width:100%}
+.bigbtn.primary{background:var(--accent);color:#fff}
+.bigbtn.primary:hover{background:var(--accent-dark)}
+.bigbtn.navy{background:var(--navy);color:#fff}
+.bigbtn.ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.bigbtn:disabled{opacity:.55;cursor:not-allowed}
+.status{margin-top:12px;padding:11px 14px;border-radius:var(--r);font-size:14px;display:none}
+.status.ok{display:block;background:var(--green-bg);color:#155f3c;border:1px solid #c6e3d1}
+.status.err{display:block;background:var(--red-bg);color:#8d2a24;border:1px solid #edc9c6}
+.status.info{display:block;background:#eef2f8;color:#1b3d6e;border:1px solid #cdd8e8}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:20}
+.nav-inner{max-width:800px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.nav .stepinfo{flex:1;font-size:13px;color:var(--muted);white-space:nowrap;text-align:center}
+.btn{border:1px solid transparent;border-radius:var(--r);padding:11px 20px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.note{border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--muted);margin-bottom:14px;background:#fff}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:var(--r);font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.done{text-align:center;padding:30px 20px}
+.done .mark{width:56px;height:56px;border-radius:50%;border:2px solid var(--green);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+.sumlist{list-style:none;padding:0;margin:0}
+.sumlist li{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:14px}
+.sumlist li:last-child{border:0}
+.sumlist li b{width:120px;flex:none;color:var(--muted);font-weight:500;font-size:13px}
+.sumlist li span{flex:1}
+
+/* Cockpit */
+.cockpit{display:none}
+.cockpit.active{display:block}
+.linkbox{background:#fafbfc;border:1px solid var(--line);border-radius:var(--r);padding:12px;font-size:13px;word-break:break-all;color:var(--navy-2);font-family:ui-monospace,Menlo,monospace}
+.sharebar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.sharebar .btn{justify-content:center}
+#qr{display:flex;justify-content:center;margin-top:14px}
+#qr img,#qr canvas{border:1px solid var(--line);padding:8px;background:#fff}
+.anlass-chk{display:flex;flex-wrap:wrap;gap:8px}
+.anlass-chk label{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;cursor:pointer;font-size:14px;background:#fff}
+.anlass-chk input{accent-color:var(--navy);width:16px;height:16px;margin:0}
+.anlass-chk label:has(input:checked){border-color:var(--navy);background:#f4f7fb}
+@media print{.topbar,.nav{display:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="firm" id="brandFirm">Finanzcheck GmbH</div>
+      <div class="sub" id="brandSub">Beratungsprotokoll · Dokumentation nach §§ 61, 62 VVG</div>
+    </div>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main class="wrap">
+
+<!-- ================= KUNDENSTRECKE ================= -->
+<div id="kunde">
+
+<div class="errbox" id="errbox"></div>
+
+<!-- Schritt 1: Angaben -->
+<section class="step active" data-step="1">
+  <div class="intro">
+    <div class="l"><h2>Ihr Beratungsprotokoll</h2><p>In vier Schritten halten wir fest, was wir besprochen haben: Sie prüfen Ihre Absicherung, treffen Ihre Entscheidung und unterschreiben. Das fertige Protokoll senden Sie als PDF per E-Mail an Ihren Berater und behalten selbst eine Kopie.</p></div>
+    <div class="r"><div class="lab">Ihr Berater</div><b id="bName">Finanzcheck GmbH</b><span id="bInfo"></span><span id="bMail"></span></div>
+  </div>
+  <div class="kicker">Schritt 1 von 4</div>
+  <h2>Ihre Angaben</h2>
+  <p class="lead">Nur das Nötigste.</p>
+  <label class="toggle"><input type="checkbox" id="zweit"> <div>Wir füllen das Protokoll zu zweit aus <span>(z. B. Ehe- oder Lebenspartner – beide unterschreiben)</span></div></label>
+  <div class="card">
+    <h3 id="h1p">Person 1</h3>
+    <div class="grid">
+      <div class="field"><label>Vorname <span class="req">*</span></label><input id="kVorname" autocomplete="given-name"></div>
+      <div class="field"><label>Nachname <span class="req">*</span></label><input id="kNachname" autocomplete="family-name"></div>
+      <div class="field"><label>E-Mail</label><input id="kEmail" type="email" inputmode="email" autocomplete="email"></div>
+      <div class="field"><label>Telefon</label><input id="kTelefon" type="tel" inputmode="tel" autocomplete="tel"></div>
+      <div class="field full"><label>Anschrift</label><input id="kAnschrift" autocomplete="street-address" placeholder="Straße Nr., PLZ Ort"></div>
+    </div>
+  </div>
+  <div class="card" id="card2" style="display:none">
+    <h3>Person 2</h3>
+    <div class="grid">
+      <div class="field"><label>Vorname <span class="req">*</span></label><input id="k2Vorname"></div>
+      <div class="field"><label>Nachname <span class="req">*</span></label><input id="k2Nachname"></div>
+      <div class="field full"><label>E-Mail</label><input id="k2Email" type="email" inputmode="email"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Ort und Datum</h3>
+    <div class="grid">
+      <div class="field"><label>Ort <span class="req">*</span></label><input id="gOrt"></div>
+      <div class="field"><label>Datum</label><input id="gDatum" type="date"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Schritt 2: Risiko-Check -->
+<section class="step" data-step="2">
+  <div class="kicker">Schritt 2 von 4</div>
+  <h2>Risiko-Check</h2>
+  <p class="lead">Bitte ordnen Sie jeden Bereich ein. Was Sie nicht antippen, bleibt außen vor.</p>
+  <div class="counts">
+    <div><b id="cntOk">0</b>vorhanden</div><div><b id="cntCheck">0</b>prüfen</div><div><b id="cntNeed">0</b>Bedarf</div><div><b id="cntNone">0</b>kein Bedarf</div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--green)"></i> vorhanden</span>
+    <span><i style="background:var(--amber)"></i> vorhanden, bitte prüfen</span>
+    <span><i style="background:var(--red)"></i> fehlt – Bedarf</span>
+    <span><i style="background:var(--grey)"></i> kein Bedarf</span>
+  </div>
+  <div id="riskList"></div>
+</section>
+
+<!-- Schritt 3: Ergebnis & Entscheidung -->
+<section class="step" data-step="3">
+  <div class="kicker">Schritt 3 von 4</div>
+  <h2>Ergebnis und Entscheidung</h2>
+  <p class="lead">Das ergibt sich aus Ihrem Risiko-Check. Ergänzen Sie gern Ihre Wünsche.</p>
+  <div class="card">
+    <h3>Ihr Bedarf</h3>
+    <div id="resBedarf"></div>
+    <div class="field" style="margin-top:12px"><label>Ihre Wünsche / Anmerkungen <span class="hint">(optional)</span></label><textarea id="bedarfWunsch" placeholder="z. B. Absicherung der Arbeitskraft, Beitrag max. 80 € im Monat" style="min-height:64px"></textarea>
+    <div class="chips" id="chipsWunsch"></div></div>
+  </div>
+  <div class="card">
+    <h3>Empfehlung</h3>
+    <div id="resEmpf"></div>
+  </div>
+  <div class="card">
+    <h3>Folgen Sie der Empfehlung?</h3>
+    <div class="yesno" id="entscheidung">
+      <div class="choice" data-val="ja"><div class="chk"></div><div><div class="t">Ja</div><div class="d">Ich möchte die Empfehlung umsetzen – mein Berater meldet sich.</div></div></div>
+      <div class="choice" data-val="nein"><div class="chk"></div><div><div class="t">Nein / noch nicht</div><div class="d">Ich möchte die Empfehlung nicht oder nur teilweise umsetzen.</div></div></div>
+    </div>
+    <div class="field" id="neinField" style="margin-top:12px;display:none"><label>Nein, weil … <span class="req">*</span></label><textarea id="neinWeil" placeholder="z. B. Ich möchte erst Angebote vergleichen." style="min-height:64px"></textarea>
+    <div class="chips" id="chipsNein"></div></div>
+  </div>
+  <div class="card">
+    <h3>Datenschutz</h3>
+    <label class="consent" id="consentBox"><input type="checkbox" id="consent"><p>Ich bin damit einverstanden, dass meine Daten unter Beachtung der datenschutzrechtlichen Vorschriften (DSGVO/BDSG) zum Zwecke der Weiterverarbeitung bei der Finanzcheck GmbH auch elektronisch gespeichert und an von ihr empfohlene Produktanbieter oder andere mit ihr vertraglich gebundene Partner zur Antrags- und Vertragsbearbeitung sowie ggf. Archivierung weitergeleitet werden.</p></label>
+  </div>
+</section>
+
+<!-- Schritt 4: Unterschrift & Senden -->
+<section class="step" data-step="4">
+  <div class="kicker">Schritt 4 von 4</div>
+  <h2>Unterschrift</h2>
+  <p class="lead">Bitte mit dem Finger, Stift oder der Maus unterschreiben. Danach wird das Protokoll als PDF erzeugt, das Sie im letzten Schritt an Ihren Berater senden.</p>
+  <div class="card">
+    <h3 id="sigKundeName">Unterschrift</h3>
+    <div class="sig-wrap" id="sigKundeWrap"><canvas id="sigKunde"></canvas><div class="sigline"></div><div class="sighint">Hier unterschreiben</div></div>
+    <div class="sig-tools"><span class="name" id="sigOrt"></span><button class="linkbtn" id="btnSigClear">Löschen</button></div>
+  </div>
+  <div class="card" id="sig2Card" style="display:none">
+    <h3 id="sig2Name">Unterschrift Person 2</h3>
+    <div class="sig-wrap" id="sig2Wrap"><canvas id="sig2"></canvas><div class="sigline"></div><div class="sighint">Hier unterschreiben</div></div>
+    <div class="sig-tools"><span class="name" id="sigOrt2"></span><button class="linkbtn" id="btnSig2Clear">Löschen</button></div>
+  </div>
+  <div class="card">
+    <ul class="sumlist" id="summary"></ul>
+  </div>
+  <button class="bigbtn primary" id="btnSend">Unterschreiben und Protokoll erstellen</button>
+  <div class="status" id="sendStatus"></div>
+</section>
+
+<!-- Fertig: Versand durch den Kunden -->
+<section class="step" data-step="5">
+  <div class="card done" style="padding-bottom:20px">
+    <div class="mark">&#10003;</div>
+    <h2 style="font-size:22px;color:var(--navy);margin-bottom:8px">Ihr Protokoll ist fertig</h2>
+    <p class="lead" id="doneText" style="margin-bottom:0"></p>
+  </div>
+  <div class="card">
+    <h3>Jetzt an Ihren Berater senden</h3>
+    <ol id="sendSteps" style="margin:0 0 14px;padding-left:20px;font-size:14px;color:var(--muted)"></ol>
+    <div class="actions">
+      <button class="bigbtn primary" id="btnShare">Per E-Mail senden</button>
+      <button class="bigbtn navy" id="btnDownload">PDF herunterladen</button>
+    </div>
+    <div class="sumlist" style="margin-top:14px"><li><b>Empfänger</b><span id="doneMail"></span></li></div>
+    <div class="status" id="doneStatus"></div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);text-align:center">Ihre Eingaben wurden auf diesem Gerät gelöscht. Das PDF bleibt nur in Ihrem Download-Ordner bzw. in Ihrer E-Mail.</p>
+</section>
+
+</div>
+
+<!-- ================= BERATER-COCKPIT ================= -->
+<div class="cockpit" id="cockpit">
+  <div class="kicker">Berater-Cockpit</div>
+  <h2>Protokoll-Link für einen Kunden erstellen</h2>
+  <p class="lead">Ihre Daten bleiben ausschließlich auf diesem Gerät. Für jeden Kunden erzeugen Sie einen Link, in dem Ihre Angaben und Ihre Unterschrift stecken – der Kunde füllt den Rest aus und schickt Ihnen das fertige PDF per E-Mail.</p>
+  <div class="card">
+    <h3>Ihre Daten als Berater</h3>
+    <div class="grid">
+      <div class="field"><label>Vorname <span class="req">*</span></label><input id="pVorname"></div>
+      <div class="field"><label>Nachname <span class="req">*</span></label><input id="pNachname"></div>
+      <div class="field"><label>E-Mail <span class="req">*</span></label><input id="pEmail" type="email"><span class="hint">An diese Adresse schickt der Kunde das fertige Protokoll.</span></div>
+      <div class="field"><label>Telefon</label><input id="pTelefon" type="tel"></div>
+      <div class="field full"><label>Registernummer (§ 34d GewO)</label><input id="pRegister" placeholder="D-XXXX-XXXXX-XX"></div>
+    </div>
+    <div class="field"><label>Ihre Unterschrift <span class="hint">(erscheint im Protokoll neben der Kundenunterschrift)</span></label>
+      <div class="sig-wrap" id="sigProfilWrap"><canvas id="sigProfil"></canvas><div class="sigline"></div><div class="sighint">Hier unterschreiben</div></div>
+      <div class="sig-tools"><span class="name" id="sigProfilStatus"></span><button class="linkbtn" id="btnSigProfilClear">Löschen</button></div>
+    </div>
+    <button class="btn primary" id="btnProfileSave">Daten speichern</button>
+    <div class="status" id="profileStatus"></div>
+  </div>
+  <div class="card">
+    <h3>Kunde (optional vorbefüllen)</h3>
+    <div class="grid">
+      <div class="field"><label>Vorname</label><input id="cVorname"></div>
+      <div class="field"><label>Nachname</label><input id="cNachname"></div>
+      <div class="field"><label>E-Mail</label><input id="cEmail" type="email"></div>
+      <div class="field"><label>Telefon (für WhatsApp)</label><input id="cTelefon" type="tel"></div>
+      <div class="field"><label>2. Person – Vorname <span class="hint">(bei Paaren)</span></label><input id="cVorname2"></div>
+      <div class="field"><label>2. Person – Nachname</label><input id="cNachname2"></div>
+      <div class="field full"><label>Beratungsanlass</label>
+        <div class="anlass-chk">
+          <label><input type="checkbox" id="aK"> Kundenwunsch</label>
+          <label><input type="checkbox" id="aR" checked> Allgemeine Risikoüberprüfung</label>
+          <label><input type="checkbox" id="aS"> Sonstiges</label>
+        </div></div>
+      <div class="field full"><label>Anlass kurz beschrieben <span class="hint">(optional)</span></label><input id="cAnlassText" placeholder="z. B. Jahresgespräch, Prüfung der BU-Absicherung"></div>
+      <div class="field"><label>Erstinformation übergeben am</label><input id="cErstinfo" type="date"></div>
+    </div>
+    <button class="btn primary" id="btnMakeLink">Link erstellen</button>
+  </div>
+  <div class="card" id="linkCard" style="display:none">
+    <h3>Link an den Kunden senden</h3>
+    <div class="linkbox" id="linkText"></div>
+    <div class="sharebar">
+      <button class="btn ghost" id="btnCopy">Kopieren</button>
+      <button class="btn ghost" id="btnWa">WhatsApp</button>
+      <button class="btn ghost" id="btnMail">E-Mail</button>
+      <button class="btn ghost" id="btnPreview">Vorschau</button>
+      <button class="btn ghost" id="btnQr">QR-Code</button>
+    </div>
+    <div id="qr"></div>
+  </div>
+</div>
+
+</main>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <button class="btn ghost" id="btnBack">Zurück</button>
+    <div class="stepinfo" id="stepInfo"></div>
+    <button class="btn primary" id="btnNext">Weiter</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   KONFIGURATION – hier anpassen
+   Das Tool arbeitet komplett ohne Server: Der Berater erzeugt im Cockpit
+   (?cockpit) einen Link mit seinen Daten und seiner Unterschrift, der Kunde
+   füllt aus, unterschreibt und schickt das PDF selbst per E-Mail an den Berater.
+   ===================================================================== */
+const CONFIG = {
+  // Firmendaten (fest, erscheinen im Protokoll)
+  firma: { name: 'Finanzcheck GmbH', anschrift: 'Stallbaumstraße 11, 04155 Leipzig', telefon: '0800 232 00 00', web: 'www.finanzexperte.eu' },
+  pdfFarben: { navy: [16, 40, 74], accent: [229, 129, 26], grey: [110, 118, 130], line: [215, 221, 230] }
+};
+
+/* Textbausteine */
+const CHIPS = {
+  wunsch: ['Absicherung meiner Arbeitskraft', 'Absicherung meiner Familie', 'Zusätzliche Altersvorsorge', 'Bestehende Verträge optimieren', 'Beitrag sparen bei gleicher Leistung', 'Bitte um Rückruf'],
+  nein: ['Ich möchte erst Angebote vergleichen.', 'Ich möchte die Entscheidung in Ruhe überdenken.', 'Das Budget ist derzeit nicht vorhanden.', 'Ich setze die Empfehlung nur teilweise um.']
+};
+/* Risiko-Katalog: Lebensbereiche mit Erklärung für den Kunden und Textbausteinen.
+   personal: true = wird bei zwei Personen je Person abgefragt (sonst gemeinsam für den Haushalt) */
+const RISKS = [
+  { cat: 'Existenz sichern', desc: 'Was passiert, wenn Gesundheit oder Einkommen wegbrechen?', items: [
+    { id: 'phv', name: 'Privathaftpflicht', why: 'Wer anderen einen Schaden zufügt, haftet unbegrenzt mit seinem gesamten Vermögen – die wichtigste Versicherung überhaupt.',
+      need: 'Keine Privathaftpflichtversicherung vorhanden – unbegrenztes Haftungsrisiko mit dem gesamten Vermögen.', rec: 'Abschluss einer Privathaftpflichtversicherung (Deckungssumme mind. 10 Mio. €, Forderungsausfall eingeschlossen).' },
+    { id: 'bu', personal: true, name: 'Berufsunfähigkeit', why: 'Jeder Vierte wird vor der Rente berufsunfähig. Die gesetzliche Erwerbsminderungsrente reicht selten zum Leben.',
+      need: 'Arbeitskraft nicht bzw. nicht ausreichend abgesichert – bei Berufsunfähigkeit droht eine erhebliche Einkommenslücke.', rec: 'Abschluss einer Berufsunfähigkeitsversicherung mit bedarfsgerechter Rentenhöhe (Richtwert 70–80 % des Nettoeinkommens) bis zum Rentenalter.' },
+    { id: 'kv', personal: true, name: 'Krankenversicherung / Krankentagegeld', why: 'Nach 6 Wochen Krankheit endet die Lohnfortzahlung. Selbstständige haben oft gar keine Absicherung des Verdienstausfalls.',
+      need: 'Verdienstausfall bei längerer Krankheit nicht abgesichert.', rec: 'Abschluss einer Krankentagegeldversicherung zur Schließung der Einkommenslücke ab der 7. Krankheitswoche.' },
+    { id: 'rlv', personal: true, name: 'Risikolebensversicherung', why: 'Wer Familie oder laufende Kredite hat, sollte Angehörige im Todesfall finanziell absichern.',
+      need: 'Hinterbliebene bzw. laufende Verbindlichkeiten sind im Todesfall nicht abgesichert.', rec: 'Abschluss einer Risikolebensversicherung mit bedarfsgerechter Versicherungssumme (Richtwert 3–5 Jahresnettoeinkommen bzw. Höhe der Verbindlichkeiten).' },
+    { id: 'unfall', personal: true, name: 'Unfallversicherung', why: 'Die gesetzliche Unfallversicherung greift nur bei Arbeit und Arbeitsweg – zwei Drittel aller Unfälle passieren in der Freizeit.',
+      need: 'Keine Absicherung finanzieller Folgen bei dauerhafter Invalidität durch Freizeitunfall.', rec: 'Abschluss einer privaten Unfallversicherung mit Invaliditätsleistung und Progression.' },
+    { id: 'pflege', personal: true, name: 'Pflegeabsicherung', why: 'Die gesetzliche Pflegeversicherung ist nur eine Teilkaskoversicherung – der Eigenanteil im Heim liegt oft über 2.500 € monatlich.',
+      need: 'Pflegekostenlücke im Pflegefall nicht abgesichert.', rec: 'Abschluss einer ergänzenden Pflegezusatzversicherung (Pflegetagegeld/Pflegerente).' },
+    { id: 'rs', name: 'Rechtsschutz', why: 'Recht haben und Recht bekommen sind zwei Dinge – Anwalts- und Gerichtskosten gehen schnell in die Tausende.',
+      need: 'Kein Kostenschutz bei rechtlichen Auseinandersetzungen (Privat, Beruf, Verkehr, Wohnen).', rec: 'Abschluss einer Rechtsschutzversicherung mit den benötigten Bausteinen (Privat/Beruf/Verkehr/Wohnen).' }
+  ]},
+  { cat: 'Besitz schützen', desc: 'Was passiert bei Feuer, Wasser, Einbruch oder Sturm?', items: [
+    { id: 'hausrat', name: 'Hausrat', why: 'Ein Wohnungsbrand oder Einbruch kann den kompletten Hausstand vernichten – Neuwertersatz ist entscheidend.',
+      need: 'Hausrat nicht bzw. nicht zum Neuwert abgesichert (Unterversicherung).', rec: 'Abschluss bzw. Anpassung einer Hausratversicherung zum Neuwert inkl. Elementarschäden.' },
+    { id: 'gebaeude', name: 'Wohngebäude', why: 'Für Eigentümer existenziell: Feuer, Leitungswasser, Sturm und Elementarschäden am eigenen Haus.',
+      need: 'Wohngebäude nicht bzw. nicht ausreichend versichert, Elementarschäden fehlen.', rec: 'Abschluss bzw. Anpassung der Wohngebäudeversicherung inkl. Elementardeckung und gleitendem Neuwert.' },
+    { id: 'kfz', name: 'Kfz-Versicherung', why: 'Haftpflicht ist Pflicht – Kasko und Leistungsumfang sollten zum Fahrzeugwert passen.',
+      need: 'Kfz-Absicherung nicht bedarfsgerecht (Kasko/Leistungsumfang).', rec: 'Prüfung bzw. Anpassung der Kfz-Versicherung (Haftpflicht, Teil-/Vollkasko, Schutzbrief).' },
+    { id: 'tier', name: 'Tierhalterhaftpflicht', why: 'Hunde- und Pferdehalter haften für Schäden ihrer Tiere unbegrenzt – die Privathaftpflicht deckt das nicht.',
+      need: 'Haftung als Tierhalter nicht abgesichert.', rec: 'Abschluss einer Tierhalterhaftpflichtversicherung.' }
+  ]},
+  { cat: 'Zukunft gestalten', desc: 'Reicht das Geld später – für Sie und Ihre Familie?', items: [
+    { id: 'av', personal: true, name: 'Altersvorsorge', why: 'Die gesetzliche Rente ersetzt nur rund die Hälfte des letzten Nettoeinkommens – die Lücke wächst mit jedem Jahr Aufschub.',
+      need: 'Versorgungslücke im Alter – bisherige Vorsorge deckt den gewünschten Lebensstandard nicht.', rec: 'Aufbau einer zusätzlichen Altersvorsorge (z. B. Basisrente, private Rentenversicherung, fondsgebundene Vorsorge) passend zur Förderfähigkeit.' },
+    { id: 'bav', personal: true, name: 'Betriebliche Altersvorsorge', why: 'Arbeitgeberzuschuss, Steuer- und Sozialabgabenersparnis: Für Angestellte oft der günstigste Weg zur Zusatzrente.',
+      need: 'Förderung der betrieblichen Altersvorsorge (Arbeitgeberzuschuss, Steuervorteil) wird nicht genutzt.', rec: 'Einrichtung einer betrieblichen Altersvorsorge per Entgeltumwandlung mit Arbeitgeberzuschuss.' },
+    { id: 'kinder', name: 'Kinder- / Ausbildungsvorsorge', why: 'Ausbildung, Studium, Führerschein: Wer früh beginnt, braucht nur kleine Beiträge.',
+      need: 'Keine Vorsorge für Ausbildung/Start der Kinder vorhanden.', rec: 'Einrichtung eines Sparplans bzw. einer Kindervorsorge.' },
+    { id: 'vermoegen', name: 'Vermögensaufbau', why: 'Geld auf dem Girokonto verliert durch Inflation jedes Jahr an Wert – Sparziele brauchen einen Plan.',
+      need: 'Kein strukturierter Vermögensaufbau, Sparziele unklar.', rec: 'Aufbau eines regelmäßigen Sparplans (z. B. Fonds-/ETF-Sparplan, Edelmetall) passend zu Anlagehorizont und Risikobereitschaft.' }
+  ]}
+];
+
+const STATUS = { ok: 'vorhanden', check: 'prüfen', need: 'Bedarf', none: 'kein Bedarf' };
+
+/* =====================================================================
+   HILFSFUNKTIONEN
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return d && m ? `${d}.${m}.${y}` : iso; }
+function today(){ return new Date().toISOString().slice(0,10); }
+function setStatus(id,cls,msg){ const s=$(id); s.className='status '+cls; s.textContent=msg; }
+function allRisks(){ return RISKS.flatMap(c=>c.items.map(r=>({...r, cat:c.cat}))); }
+
+/* Signatur-Pad */
+class SigPad {
+  constructor(canvas, wrap, onChange){
+    this.c=canvas; this.wrap=wrap; this.ctx=canvas.getContext('2d'); this.onChange=onChange||(()=>{});
+    this.strokes=[]; this.cur=null; this.drawing=false; this.imgEl=null;
+    this.resize(); window.addEventListener('resize',()=>this.resize());
+    canvas.addEventListener('pointerdown',e=>this.down(e)); canvas.addEventListener('pointermove',e=>this.move(e));
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>canvas.addEventListener(ev,e=>this.up(e)));
+  }
+  resize(){ const r=this.c.getBoundingClientRect(); const dpr=window.devicePixelRatio||1; if(r.width===0) return; this.c.width=Math.round(r.width*dpr); this.c.height=Math.round(r.height*dpr); this.ctx.setTransform(dpr,0,0,dpr,0,0); this.redraw(); }
+  pos(e){ const r=this.c.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+  down(e){ e.preventDefault(); this.c.setPointerCapture&&this.c.setPointerCapture(e.pointerId); this.drawing=true; this.imgEl=null; this.cur=[this.pos(e)]; }
+  move(e){ if(!this.drawing) return; e.preventDefault(); this.cur.push(this.pos(e)); this.redraw(); }
+  up(){ if(!this.drawing) return; this.drawing=false; if(this.cur&&this.cur.length){ if(this.cur.length===1) this.cur.push({x:this.cur[0].x+.5,y:this.cur[0].y}); this.strokes.push(this.cur);} this.cur=null; this.redraw(); this.onChange(); }
+  path(ctx,s){ ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y); for(let i=1;i<s.length;i++){ const m={x:(s[i-1].x+s[i].x)/2,y:(s[i-1].y+s[i].y)/2}; ctx.quadraticCurveTo(s[i-1].x,s[i-1].y,m.x,m.y);} ctx.lineTo(s[s.length-1].x,s[s.length-1].y); ctx.stroke(); }
+  redraw(){ const ctx=this.ctx,r=this.c.getBoundingClientRect(); ctx.clearRect(0,0,r.width,r.height);
+    if(!this.strokes.length&&this.imgEl){ const im=this.imgEl; const s=Math.min((r.width-40)/im.width,(r.height-50)/im.height,1.2); const w=im.width*s,h=im.height*s; ctx.drawImage(im,(r.width-w)/2,(r.height-50-h)/2+10,w,h); this.wrap.classList.add('signed'); return; }
+    ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#10284a';
+    for(const s of (this.cur?[...this.strokes,this.cur]:this.strokes)) if(s.length>1) this.path(ctx,s);
+    this.wrap.classList.toggle('signed',!this.isEmpty()); }
+  isEmpty(){ return !this.strokes.length && !this.imgEl; }
+  getStrokes(){ return this.strokes.map(st=>st.map(p=>[Math.round(p.x*10)/10,Math.round(p.y*10)/10])); }
+  setStrokes(arr){ this.imgEl=null; this.img=null; this.strokes=(arr||[]).map(st=>st.map(([x,y])=>({x,y}))); this.redraw(); }
+  clear(){ this.strokes=[]; this.imgEl=null; this.img=null; this.redraw(); this.onChange(); }
+  toDataURL(){ if(this.isEmpty()) return null; if(!this.strokes.length) return this.img;
+    const r=this.c.getBoundingClientRect(); let minX=1e9,minY=1e9,maxX=0,maxY=0;
+    for(const s of this.strokes) for(const p of s){ minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);}
+    const pad=8; minX=Math.max(0,minX-pad);minY=Math.max(0,minY-pad);maxX=Math.min(r.width,maxX+pad);maxY=Math.min(r.height,maxY+pad);
+    const w=Math.max(10,maxX-minX),h=Math.max(10,maxY-minY),scale=3; const off=document.createElement('canvas'); off.width=w*scale; off.height=h*scale; const o=off.getContext('2d');
+    o.scale(scale,scale); o.translate(-minX,-minY); o.lineWidth=2.2; o.lineCap='round'; o.lineJoin='round'; o.strokeStyle='#10284a'; for(const s of this.strokes) this.path(o,s); return off.toDataURL('image/png'); }
+  fromDataURL(url){ this.strokes=[]; this.imgEl=null; this.img=url||null; if(!url){ this.redraw(); return; } const im=new Image(); im.onload=()=>{ this.imgEl=im; this.redraw(); this.onChange(); }; im.src=url; }
+}
+
+/* =====================================================================
+   LINK-PARAMETER (vom Berater vorbereitet)
+   ===================================================================== */
+const Q = new URLSearchParams(location.search);
+const IS_COCKPIT = Q.has('cockpit');
+const berater = { name: Q.get('b') || '', email: Q.get('be') || '', telefon: Q.get('bt') || CONFIG.firma.telefon, register: Q.get('br') || '', sig: null };
+const LINK_OK = !!(berater.name && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(berater.email));
+const link = { kv: Q.get('kv')||'', kn: Q.get('kn')||'', ke: Q.get('ke')||'', kv2: Q.get('kv2')||'', kn2: Q.get('kn2')||'', anlass: (Q.get('a')||'r').split(',').filter(Boolean), anlassText: Q.get('at')||'', erstinfo: Q.get('ei')||'' };
+
+/* =====================================================================
+   KUNDENSTRECKE
+   ===================================================================== */
+const SS='bp_kunde_v3'; const STEPS=4; let step=1; let state=null; let sigKunde=null, sig2=null; let lastPdf=null;
+function newState(){ return { id:'BP-'+today().replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,6).toUpperCase(), zweit: !!link.kv2, kunde:{vorname:link.kv,nachname:link.kn,email:link.ke,anschrift:'',telefon:''}, kunde2:{vorname:link.kv2,nachname:link.kn2,email:''}, ort:'', datum:today(), risks:{}, bedarfWunsch:'', entscheidung:'', neinWeil:'', consent:false, sig:null, sig2:null, step:1 }; }
+function save(){ try{ sessionStorage.setItem(SS, JSON.stringify(state)); }catch(e){} }
+function wipe(){ try{ sessionStorage.removeItem(SS); }catch(e){} }
+function pName(n){ const k=n===2?state.kunde2:state.kunde; return (k.vorname||'').trim() || (n===2?'Person 2':'Person 1'); }
+function fullName(n){ const k=n===2?state.kunde2:state.kunde; return ((k.vorname||'')+' '+(k.nachname||'')).trim(); }
+function kundenName(){ return state.zweit ? (state.kunde.nachname===state.kunde2.nachname ? pName(1)+' und '+fullName(2) : fullName(1)+' und '+fullName(2)) : fullName(1); }
+
+const FIELDS = { kVorname:['kunde','vorname'], kNachname:['kunde','nachname'], kAnschrift:['kunde','anschrift'], kEmail:['kunde','email'], kTelefon:['kunde','telefon'], k2Vorname:['kunde2','vorname'], k2Nachname:['kunde2','nachname'], k2Email:['kunde2','email'], gOrt:['ort'], gDatum:['datum'], bedarfWunsch:['bedarfWunsch'], neinWeil:['neinWeil'] };
+const get=p=>p.length===2?(state[p[0]]||{})[p[1]]:state[p[0]]; const set=(p,v)=>{ if(p.length===2)(state[p[0]]||(state[p[0]]={}))[p[1]]=v; else state[p[0]]=v; };
+
+function initKunde(){
+  $('nav').style.display='';
+  $('bName').textContent=berater.name; $('bInfo').textContent=CONFIG.firma.name+(berater.telefon?' · '+berater.telefon:''); $('bMail').textContent=berater.email;
+  $('brandSub').textContent='Beratungsprotokoll · '+berater.name;
+  if(Q.get('bs')) berater.sig = sigFromCode(Q.get('bs'));
+  if(!LINK_OK){ $('bName').textContent='Link unvollständig'; $('bInfo').textContent='Bitte lassen Sie sich von Ihrem Berater einen neuen Link schicken.'; }
+  try{ const d=JSON.parse(sessionStorage.getItem(SS)||'null'); state = (d&&d.id) ? d : newState(); }catch(e){ state=newState(); }
+  Object.entries(FIELDS).forEach(([id,p])=>{ $(id).value=get(p)||''; $(id).addEventListener('input',()=>{ set(p,$(id).value); $(id).closest('.field').classList.remove('invalid'); hideErr(); save(); }); });
+  $('zweit').checked=!!state.zweit; applyZweit(); $('zweit').addEventListener('change',()=>{ state.zweit=$('zweit').checked; applyZweit(); renderRisks(); updateCounts(); save(); });
+  $('entscheidung').querySelectorAll('.choice').forEach(c=>{ c.classList.toggle('on',state.entscheidung===c.dataset.val); c.addEventListener('click',()=>{ state.entscheidung=c.dataset.val; $('entscheidung').classList.remove('invalid'); $('entscheidung').querySelectorAll('.choice').forEach(x=>x.classList.toggle('on',x===c)); $('neinField').style.display=state.entscheidung==='nein'?'flex':'none'; hideErr(); save(); }); });
+  $('neinField').style.display=state.entscheidung==='nein'?'flex':'none';
+  $('consent').checked=!!state.consent; $('consent').addEventListener('change',()=>{ state.consent=$('consent').checked; $('consentBox').classList.remove('invalid'); hideErr(); save(); });
+  addChips('chipsWunsch',CHIPS.wunsch,'bedarfWunsch'); addChips('chipsNein',CHIPS.nein,'neinWeil');
+  renderRisks(); updateCounts();
+  sigKunde=new SigPad($('sigKunde'),$('sigKundeWrap'),()=>{ state.sig=sigKunde.toDataURL(); $('sigKundeWrap').classList.remove('invalid'); hideErr(); save(); });
+  sig2=new SigPad($('sig2'),$('sig2Wrap'),()=>{ state.sig2=sig2.toDataURL(); $('sig2Wrap').classList.remove('invalid'); hideErr(); save(); });
+  $('btnSigClear').addEventListener('click',()=>sigKunde.clear()); $('btnSig2Clear').addEventListener('click',()=>sig2.clear());
+  $('btnNext').addEventListener('click',()=>{ if(validate()) showStep(step+1); });
+  $('btnBack').addEventListener('click',()=>showStep(step-1));
+  $('btnSend').addEventListener('click',sendProtokoll);
+  $('btnDownload').addEventListener('click',()=>{ if(lastPdf) lastPdf.save(pdfFileName()); });
+  $('btnShare').addEventListener('click',sharePdf);
+  showStep(Math.min(4,state.step||1));
+}
+function applyZweit(){ $('card2').style.display=state.zweit?'block':'none'; $('h1p').textContent=state.zweit?'Person 1':'Ihre Daten'; $('sig2Card').style.display=state.zweit?'block':'none'; }
+function addChips(hostId,list,targetId){ const h=$(hostId); list.forEach(t=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.addEventListener('click',()=>{ const ta=$(targetId); ta.value=(ta.value.trim()?ta.value.replace(/\s+$/,'')+'\n':'')+t; ta.dispatchEvent(new Event('input')); }); h.appendChild(b); }); }
+
+function showStep(n){
+  step=Math.max(1,Math.min(5,n)); state.step=step; if(step===5) wipe(); else save();
+  document.querySelectorAll('#kunde .step').forEach(s=>s.classList.toggle('active',+s.dataset.step===step));
+  $('nav').style.display = step===5 ? 'none' : '';
+  $('btnBack').style.visibility = step===1 ? 'hidden' : 'visible';
+  $('btnNext').style.display = step===4 ? 'none' : '';
+  $('stepInfo').textContent = step<=4 ? `Schritt ${step} von ${STEPS}` : '';
+  const p=$('progress'); p.innerHTML=''; for(let i=1;i<=STEPS;i++){ const s=document.createElement('span'); if(i<step||step===5) s.className='done'; else if(i===step) s.className='cur'; p.appendChild(s); }
+  hideErr();
+  if(step===2){ renderRisks(); updateCounts(); }
+  if(step===3) renderResult();
+  if(step===4){ $('sigKundeName').textContent='Unterschrift '+fullName(1); $('sig2Name').textContent='Unterschrift '+fullName(2); $('sigOrt').textContent=$('sigOrt2').textContent=state.ort+', '+fmtDate(state.datum); renderSummary();
+    setTimeout(()=>{ sigKunde.resize(); if(state.sig&&sigKunde.isEmpty()) sigKunde.fromDataURL(state.sig); if(state.zweit){ sig2.resize(); if(state.sig2&&sig2.isEmpty()) sig2.fromDataURL(state.sig2); } },30); }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function hideErr(){ $('errbox').classList.remove('show'); }
+function showErr(list){ $('errbox').innerHTML='<b>Bitte noch ergänzen:</b> '+list.map(esc).join(', '); $('errbox').classList.add('show'); toast('Bitte noch ergänzen: '+list.join(', ')); }
+function validate(){
+  const missing=[]; let first=null;
+  const req=(id,label)=>{ const el=$(id); const bad=!el.value.trim(); el.closest('.field').classList.toggle('invalid',bad); if(bad){ missing.push(label); first=first||el; } };
+  const mail=(id,label)=>{ const v=$(id).value.trim(); if(v&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ $(id).closest('.field').classList.add('invalid'); missing.push(label); first=first||$(id); } };
+  if(step===1&&!LINK_OK){ showErr(['Dieser Link enthält keine Berater-Daten – bitte einen neuen Link anfordern']); return false; }
+  if(step===1){ const s1=state.zweit?' (Person 1)':''; req('kVorname','Vorname'+s1); req('kNachname','Nachname'+s1); mail('kEmail','gültige E-Mail-Adresse'+s1);
+    if(state.zweit){ req('k2Vorname','Vorname (Person 2)'); req('k2Nachname','Nachname (Person 2)'); mail('k2Email','gültige E-Mail-Adresse (Person 2)'); } req('gOrt','Ort'); }
+  if(step===2){ if(!Object.values(state.risks).some(o=>o.st)){ missing.push('mindestens einen Bereich im Risiko-Check antippen'); first=$('riskList'); } }
+  if(step===3){ if(!state.entscheidung){ missing.push('Ihre Entscheidung (Ja / Nein)'); $('entscheidung').classList.add('invalid'); first=first||$('entscheidung'); } else if(state.entscheidung==='nein') req('neinWeil','Begründung (nein, weil …)'); }
+  if(step===4){ if(sigKunde.isEmpty()){ missing.push('Unterschrift '+pName(1)); $('sigKundeWrap').classList.add('invalid'); first=first||$('sigKundeWrap'); } if(state.zweit&&sig2.isEmpty()){ missing.push('Unterschrift '+pName(2)); $('sig2Wrap').classList.add('invalid'); first=first||$('sig2Wrap'); } }
+  if(missing.length){ showErr(missing); if(first){ first.scrollIntoView({behavior:'smooth',block:'center'}); if(first.focus&&first.tagName!=='DIV') setTimeout(()=>first.focus({preventScroll:true}),350); } return false; }
+  return true;
+}
+
+/* Risiko-Check – Schlüssel: id (Person 1 / gemeinsam), id~2 (Person 2) */
+function riskKeys(r){ return (r.personal&&state.zweit) ? [[r.id,1],[r.id+'~2',2]] : [[r.id,0]]; }
+function renderRisks(){
+  const host=$('riskList'); host.innerHTML='';
+  RISKS.forEach(cat=>{ const c=document.createElement('div'); c.className='cat';
+    c.innerHTML=`<div class="cat-head"><h3>${esc(cat.cat)}</h3><p>${esc(cat.desc)}</p></div>`;
+    cat.items.forEach(r=>{ const d=document.createElement('div'); d.className='risk'; d.id='risk-'+r.id;
+      let rows='';
+      riskKeys(r).forEach(([key,pn])=>{ rows+=`<div class="prow" data-key="${key}">${pn?`<span class="plab">${esc(pName(pn))}</span>`:''}<div class="seg"><button type="button" class="b-ok" data-st="ok">vorhanden</button><button type="button" class="b-check" data-st="check">bitte prüfen</button><button type="button" class="b-need" data-st="need">fehlt – Bedarf</button><button type="button" class="b-none" data-st="none">kein Bedarf</button></div></div><div class="pinfo" data-key="${key}"><input placeholder="Gesellschaft, Höhe oder Beitrag (optional)"></div>`; });
+      d.innerHTML=`<div class="name">${esc(r.name)}</div><div class="why">${esc(r.why)}</div>${rows}`;
+      d.querySelectorAll('.prow').forEach(row=>{ const key=row.dataset.key; row.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ const o=state.risks[key]||(state.risks[key]={}); o.st=(o.st===b.dataset.st)?'':b.dataset.st; paintRisk(r); updateCounts(); hideErr(); save(); })); });
+      d.querySelectorAll('.pinfo').forEach(pi=>{ const key=pi.dataset.key; pi.querySelector('input').addEventListener('input',e=>{ (state.risks[key]||(state.risks[key]={})).info=e.target.value; save(); }); });
+      c.appendChild(d); paintRisk(r,d); });
+    host.appendChild(c); });
+}
+function paintRisk(r,d){ d=d||$('risk-'+r.id); const keys=riskKeys(r); const sts=keys.map(([k])=>(state.risks[k]||{}).st).filter(Boolean);
+  const cls = sts.length===0 ? '' : (sts.includes('need')?'st-need':(sts.includes('check')?'st-check':(sts.includes('ok')?'st-ok':'st-none'))); d.className='risk'+(cls?' '+cls:'');
+  keys.forEach(([k])=>{ const o=state.risks[k]||{}; d.querySelector(`.prow[data-key="${k}"]`).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.st===o.st)); const pi=d.querySelector(`.pinfo[data-key="${k}"]`); pi.classList.toggle('show',o.st==='ok'||o.st==='check'); pi.querySelector('input').value=o.info||''; }); }
+function updateCounts(){ const c={ok:0,check:0,need:0,none:0}; riskLines().forEach(r=>c[r.st]++); $('cntOk').textContent=c.ok; $('cntCheck').textContent=c.check; $('cntNeed').textContent=c.need; $('cntNone').textContent=c.none; }
+function riskLines(){ const out=[]; allRisks().forEach(r=>{ riskKeys(r).forEach(([k,pn])=>{ const o=state.risks[k]; if(o&&o.st) out.push({...r,...o,key:k,pn,label:r.name+(pn?' ('+pName(pn)+')':'')}); }); }); return out; }
+
+/* Texte für Protokoll */
+function textBedarfRisiko(){
+  const L=riskLines(), out=[]; const need=L.filter(r=>r.st==='need'), chk=L.filter(r=>r.st==='check'), ok=L.filter(r=>r.st==='ok'), none=L.filter(r=>r.st==='none');
+  need.forEach(r=>out.push('• '+r.label+': '+r.need));
+  chk.forEach(r=>out.push('• '+r.label+': bestehender Vertrag'+(r.info?' ('+r.info+')':'')+' soll auf Leistung und Beitrag geprüft werden.'));
+  if(ok.length) out.push('Bereits vorhanden: '+ok.map(r=>r.label+(r.info?' ('+r.info+')':'')).join(', ')+'.');
+  if(none.length) out.push('Kein Bedarf laut Kunde: '+none.map(r=>r.label).join(', ')+'.');
+  return out.join('\n')||'Risiko-Check ohne Angaben.';
+}
+function empfList(){ const L=riskLines(); return [...L.filter(r=>r.st==='need').map(r=>r.rec+(r.pn?' ('+pName(r.pn)+')':'')), ...L.filter(r=>r.st==='check').map(r=>'Prüfung und ggf. Optimierung der bestehenden '+r.name+(r.pn?' von '+pName(r.pn):'')+(r.info?' ('+r.info+')':'')+'.')]; }
+function textEmpfehlung(){ const e=empfList(); return e.length ? e.map(x=>'• '+x).join('\n') : 'Derzeit keine Änderung des Versicherungsschutzes empfohlen – die vorhandene Absicherung ist nach Angaben des Kunden ausreichend. Empfehlung: jährliche Überprüfung.'; }
+function textBegruendung(){
+  const L=riskLines(); const n=L.filter(r=>r.st==='need').length, c=L.filter(r=>r.st==='check').length; const kd=state.zweit?'den Kunden':'dem Kunden';
+  let t='Die Empfehlung beruht auf dem von '+kd+' durchgeführten Risiko-Check (siehe Anlage) und den Angaben zu vorhandenen Verträgen.';
+  if(n) t+=' In '+n+' Bereich'+(n>1?'en':'')+' besteht nach diesen Angaben keine bzw. keine ausreichende Absicherung; hier droht im Schadenfall ein erhebliches finanzielles Risiko.';
+  if(c) t+=' '+c+' bestehende'+(c>1?' Verträge werden':'r Vertrag wird')+' auf Leistung und Beitrag überprüft, um Lücken und Doppelabsicherung zu vermeiden.';
+  if(state.bedarfWunsch.trim()) t+=' Die geäußerten Wünsche werden bei der Umsetzung berücksichtigt.';
+  return t;
+}
+function renderResult(){
+  const L=riskLines(); const need=L.filter(r=>r.st==='need'), chk=L.filter(r=>r.st==='check'), ok=L.filter(r=>r.st==='ok');
+  let h='';
+  if(need.length) h+=`<div class="result need"><h4>Hier fehlt Absicherung (${need.length})</h4><ul>${need.map(r=>`<li><b>${esc(r.label)}</b> – ${esc(r.need)}</li>`).join('')}</ul></div>`;
+  if(chk.length) h+=`<div class="result check"><h4>Das prüfen wir (${chk.length})</h4><ul>${chk.map(r=>`<li><b>${esc(r.label)}</b>${r.info?' – '+esc(r.info):''}</li>`).join('')}</ul></div>`;
+  if(ok.length) h+=`<div class="result ok"><h4>Vorhanden (${ok.length})</h4><ul>${ok.map(r=>`<li>${esc(r.label)}${r.info?' – '+esc(r.info):''}</li>`).join('')}</ul></div>`;
+  $('resBedarf').innerHTML=h||'<div class="result neutral">Keine Bereiche angetippt.</div>';
+  const e=empfList();
+  $('resEmpf').innerHTML = e.length ? `<div class="result neutral"><ul>${e.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : '<div class="result ok">Derzeit keine Änderung Ihres Versicherungsschutzes empfohlen. Wir empfehlen eine jährliche Überprüfung.</div>';
+}
+function renderSummary(){
+  const L=riskLines(); const rows=[[state.zweit?'Kunden':'Kunde',kundenName()+' · '+state.kunde.email+(state.zweit&&state.kunde2.email?' / '+state.kunde2.email:'')],['Berater',berater.name+' · '+berater.email],['Ort / Datum',state.ort+', '+fmtDate(state.datum)],['Risiko-Check',`${L.filter(r=>r.st==='need').length} Bedarf · ${L.filter(r=>r.st==='check').length} prüfen · ${L.filter(r=>r.st==='ok').length} vorhanden`],['Entscheidung',state.entscheidung==='ja'?'Wir folgen der Empfehlung':'Nein, weil: '+state.neinWeil],['Datenschutz',state.consent?'Einwilligung erteilt':'Keine Einwilligung']];
+  $('summary').innerHTML=rows.map(r=>`<li><b>${r[0]}</b><span>${esc(r[1])}</span></li>`).join('');
+}
+
+/* Versand */
+function pdfFileName(){ return `Beratungsprotokoll_${(state.kunde.nachname||'Kunde').replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g,'_')}_${state.datum}.pdf`; }
+function sendProtokoll(){
+  if(!validate()) return; state.sig=sigKunde.toDataURL(); state.sig2=state.zweit?sig2.toDataURL():null;
+  const btn=$('btnSend'); btn.disabled=true; btn.textContent='Protokoll wird erstellt …';
+  try{ lastPdf=buildPDF(); }catch(e){ console.error(e); setStatus('sendStatus','err','Das PDF konnte nicht erzeugt werden: '+e.message); btn.disabled=false; btn.textContent='Unterschreiben und Protokoll erstellen'; return; }
+  btn.disabled=false; btn.textContent='Unterschreiben und Protokoll erstellen';
+  finishDone();
+}
+function canShareFile(){ try{ const f=new File(['x'],'x.pdf',{type:'application/pdf'}); return !!(navigator.canShare && navigator.canShare({files:[f]})); }catch(e){ return false; } }
+function mailSubject(){ return 'Beratungsprotokoll '+kundenName()+' vom '+fmtDate(state.datum); }
+function mailBody(){ return 'Guten Tag '+berater.name+',\n\nanbei mein unterschriebenes Beratungsprotokoll vom '+fmtDate(state.datum)+' (Protokoll-Nr. '+state.id+').\n'+(state.entscheidung==='ja'?'Ich folge der Empfehlung – bitte melden Sie sich bei mir'+(state.kunde.telefon?' (Tel. '+state.kunde.telefon+')':'')+'.':'Ich folge der Empfehlung derzeit nicht – die Begründung steht im Protokoll.')+'\n\nMit freundlichen Grüßen\n'+kundenName(); }
+function finishDone(){
+  const keep={kunde:state.kunde,kunde2:state.kunde2,zweit:state.zweit,datum:state.datum,id:state.id,entscheidung:state.entscheidung};
+  wipe(); state=Object.assign(newState(),keep);
+  const share=canShareFile();
+  $('doneText').textContent='Das PDF „'+pdfFileName()+'“ wurde erstellt. Bitte senden Sie es jetzt an '+berater.name+'.';
+  $('doneMail').textContent=berater.email;
+  $('sendSteps').innerHTML = share
+    ? '<li>Tippen Sie auf <b>„Per E-Mail senden“</b> und wählen Sie Ihr E-Mail-Programm (oder WhatsApp).</li><li>Tragen Sie als Empfänger <b>'+esc(berater.email)+'</b> ein – die Adresse steht auch im Nachrichtentext.</li><li>Absenden. Fertig.</li>'
+    : '<li>Klicken Sie auf <b>„Per E-Mail senden“</b> – das PDF wird heruntergeladen und Ihr E-Mail-Programm öffnet sich mit Empfänger und Betreff.</li><li>Hängen Sie die heruntergeladene Datei <b>'+esc(pdfFileName())+'</b> an die E-Mail an.</li><li>Absenden. Fertig.</li>';
+  $('btnShare').textContent = share ? 'Per E-Mail senden' : 'Per E-Mail senden (Datei anhängen)';
+  showStep(5);
+}
+async function sharePdf(){ if(!lastPdf) return;
+  const blob=lastPdf.output('blob'); const file=new File([blob],pdfFileName(),{type:'application/pdf'});
+  if(canShareFile()){ try{ await navigator.share({files:[file],title:mailSubject(),text:'An: '+berater.email+'\n\n'+mailBody()}); setStatus('doneStatus','ok','Vielen Dank. Falls Sie das PDF noch nicht abgeschickt haben, können Sie es jederzeit erneut senden.'); }catch(e){ if(e&&e.name!=='AbortError') setStatus('doneStatus','err','Teilen war nicht möglich – bitte „PDF herunterladen“ nutzen und die Datei per E-Mail an '+berater.email+' schicken.'); } return; }
+  lastPdf.save(pdfFileName());
+  setStatus('doneStatus','info','Das PDF wurde heruntergeladen. Ihr E-Mail-Programm öffnet sich – bitte die Datei „'+pdfFileName()+'“ aus dem Download-Ordner anhängen.');
+  setTimeout(()=>{ location.href='mailto:'+encodeURIComponent(berater.email)+'?subject='+encodeURIComponent(mailSubject())+'&body='+encodeURIComponent(mailBody()+'\n\n(Bitte die heruntergeladene Datei '+pdfFileName()+' anhängen.)'); },600);
+}
+
+/* Berater-Unterschrift kompakt im Link: Strokes vereinfachen, Deltas als Varint, Base64url */
+function rdp(pts,eps){ if(pts.length<3) return pts; let dmax=0,idx=0; const [a,b]=[pts[0],pts[pts.length-1]]; const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1e-9;
+  for(let i=1;i<pts.length-1;i++){ const d=Math.abs(dy*pts[i][0]-dx*pts[i][1]+b[0]*a[1]-b[1]*a[0])/len; if(d>dmax){ dmax=d; idx=i; } }
+  if(dmax>eps){ const l=rdp(pts.slice(0,idx+1),eps), r=rdp(pts.slice(idx),eps); return l.slice(0,-1).concat(r); } return [a,b]; }
+function sigToCode(strokes,maxLen){ maxLen=maxLen||900; let eps=0.8, code='';
+  for(let t=0;t<8;t++){ const bytes=[]; const zig=n=>{ n=(n<<1)^(n>>31); do{ let b=n&127; n>>>=7; if(n) b|=128; bytes.push(b);}while(n); };
+    const ss=strokes.map(st=>rdp(st.map(([x,y])=>[Math.round(x),Math.round(y)]),eps)).filter(st=>st.length);
+    zig(ss.length); ss.forEach(st=>{ zig(st.length); let px=0,py=0; st.forEach(([x,y])=>{ zig(x-px); zig(y-py); px=x; py=y; }); });
+    code=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); if(code.length<=maxLen) break; eps*=1.6; }
+  return code; }
+function sigFromCode(code){ try{ const bin=atob(code.replace(/-/g,'+').replace(/_/g,'/')); const bytes=[...bin].map(c=>c.charCodeAt(0)); let i=0; const rd=()=>{ let n=0,sh=0,b; do{ b=bytes[i++]; n|=(b&127)<<sh; sh+=7; }while(b&128); return (n>>>1)^-(n&1); };
+    const n=rd(); const strokes=[]; for(let k=0;k<n;k++){ const m=rd(); let x=0,y=0; const st=[]; for(let j=0;j<m;j++){ x+=rd(); y+=rd(); st.push([x,y]); } strokes.push(st); }
+    let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9; strokes.forEach(st=>st.forEach(([x,y])=>{ minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y); })); if(minX>maxX) return null;
+    const pad=8, w=maxX-minX+2*pad, h=maxY-minY+2*pad, sc=3; const c=document.createElement('canvas'); c.width=Math.max(10,w*sc); c.height=Math.max(10,h*sc); const o=c.getContext('2d'); o.scale(sc,sc); o.translate(-minX+pad,-minY+pad); o.lineWidth=2.2; o.lineCap='round'; o.lineJoin='round'; o.strokeStyle='#10284a';
+    strokes.forEach(st=>{ if(!st.length) return; o.beginPath(); o.moveTo(st[0][0],st[0][1]); if(st.length===1) o.lineTo(st[0][0]+.5,st[0][1]); for(let j=1;j<st.length;j++){ const m=[(st[j-1][0]+st[j][0])/2,(st[j-1][1]+st[j][1])/2]; o.quadraticCurveTo(st[j-1][0],st[j-1][1],m[0],m[1]); } o.lineTo(st[st.length-1][0],st[st.length-1][1]); o.stroke(); });
+    return c.toDataURL('image/png'); }catch(e){ return null; } }
+
+/* =====================================================================
+   PDF
+   ===================================================================== */
+function buildPDF(){
+  const { jsPDF } = window.jspdf||{}; if(!jsPDF) throw new Error('PDF-Bibliothek nicht geladen (Internetverbindung?)');
+  const doc=new jsPDF({unit:'mm',format:'a4'}); const C=CONFIG.pdfFarben; const W=210,H=297,ML=18,MR=18,CW=W-ML-MR; let y=0; const s=state, F=CONFIG.firma;
+  const setC=rgb=>doc.setTextColor(rgb[0],rgb[1],rgb[2]); const font=(st,sz)=>{ doc.setFont('helvetica',st); doc.setFontSize(sz); };
+  const need=h=>{ if(y+h>H-22){ doc.addPage(); y=20; } };
+  const text=(t,x,o={})=>{ const sz=o.size||9.5; font(o.style||'normal',sz); setC(o.color||[30,35,48]); const lines=doc.splitTextToSize(String(t||''),o.w||CW); const lh=sz*.42; for(const ln of lines){ need(lh); doc.text(ln,x,y); y+=lh; } };
+  const section=(num,title,extraH)=>{ need(22+(extraH||12)); y+=4; doc.setFillColor(...C.navy); doc.rect(ML,y-4.5,CW,7,'F'); font('bold',10); setC([255,255,255]); doc.text(num+'  '+title,ML+3,y); y+=7; };
+  const sub=t=>{ need(8); font('bold',9.5); setC(C.navy); doc.text(t,ML,y); y+=5; };
+  const boxH=(t,minH)=>{ font('normal',9.5); return Math.max(minH||10, doc.splitTextToSize(String(t||'–'),CW-8).length*4+5); };
+  const box=(t,minH)=>{ font('normal',9.5); const lines=doc.splitTextToSize(String(t||'–'),CW-8); const h=Math.max(minH||10,lines.length*4+5); need(h+2); doc.setDrawColor(...C.line); doc.setFillColor(250,251,252); doc.rect(ML,y-1,CW,h,'FD'); setC([30,35,48]); let yy=y+4; for(const ln of lines){ doc.text(ln,ML+4,yy); yy+=4; } y+=h+3; };
+  const subBox=(title,t,minH)=>{ need(boxH(t,minH)+9); sub(title); box(t,minH); };
+  const check=(x,yy,on,label)=>{ doc.setDrawColor(...C.navy); doc.setLineWidth(.35); doc.rect(x,yy-3.2,3.6,3.6); if(on){ doc.setFillColor(...C.navy); doc.rect(x+.7,yy-2.5,2.2,2.2,'F'); } font('normal',9.5); setC([30,35,48]); doc.text(label,x+5.5,yy); };
+  const kv=(label,val,x,w)=>{ font('normal',7); setC(C.grey); doc.text(label,x,y); font('normal',9.5); setC([30,35,48]); const lines=doc.splitTextToSize(val||'–',w); doc.text(lines,x,y+3.8); return 3.8+lines.length*3.9+1.6; };
+
+  doc.setFillColor(...C.navy); doc.rect(0,0,W,30,'F'); doc.setFillColor(...C.accent); doc.rect(0,30,W,1.2,'F');
+  font('bold',18); setC([255,255,255]); doc.text('Beratungsprotokoll',ML,15); font('normal',9); setC([200,210,225]); doc.text('Dokumentation der Versicherungsberatung gemäß §§ 61, 62 VVG',ML,21.5);
+  font('bold',10); setC([255,255,255]); doc.text(F.name,W-MR,13,{align:'right'}); font('normal',8); setC([200,210,225]); doc.text([F.anschrift,'Protokoll-Nr. '+s.id],W-MR,18.5,{align:'right'});
+  y=42;
+
+  section('I.','Gesprächsteilnehmer');
+  const colW=(CW-6)/2, yStart=y; font('bold',9.5); setC(C.navy); doc.text('1. Vermittler / Berater',ML,y); y+=5;
+  y+=kv('Name',berater.name,ML,colW); y+=kv('Firmenname',F.name,ML,colW); y+=kv('Anschrift',F.anschrift,ML,colW); y+=kv('Telefon',berater.telefon||F.telefon,ML,colW); y+=kv('E-Mail',berater.email,ML,colW);
+  if(berater.register) y+=kv('Registernummer (§ 34d GewO)',berater.register,ML,colW);
+  y+=kv('Erstinformation über Vermittlerstatus übergeben am',fmtDate(link.erstinfo||s.datum),ML,colW); const yL=y;
+  const xr=ML+colW+6; y=yStart; font('bold',9.5); setC(C.navy); doc.text(s.zweit?'2. Kunden':'2. Kunde',xr,y); y+=5;
+  y+=kv('Name / Vorname',s.kunde.nachname+', '+s.kunde.vorname+(s.zweit?'\n'+s.kunde2.nachname+', '+s.kunde2.vorname:''),xr,colW); y+=kv('Anschrift',s.kunde.anschrift,xr,colW);
+  y+=kv('Telefon / E-Mail',[s.kunde.telefon?'Tel. '+s.kunde.telefon:'',s.kunde.email,(s.zweit&&s.kunde2.email)?s.kunde2.email:''].filter(Boolean).join(' · '),xr,colW); y+=kv('3. Sonstige Gesprächsteilnehmer','keine',xr,colW);
+  y=Math.max(yL,y)+1; doc.setDrawColor(...C.line); doc.setLineWidth(.3); doc.line(ML+colW+3,yStart-2,ML+colW+3,y-3);
+
+  section('II.','Beratungsanlass'); need(8);
+  check(ML,y,link.anlass.includes('k'),'1. Kundenwunsch'); check(ML+55,y,link.anlass.includes('r'),'2. Allgemeine Risikoüberprüfung'); check(ML+125,y,link.anlass.includes('s'),'3. Sonstiges'); y+=7;
+  if(link.anlassText) text(link.anlassText,ML,{color:[60,66,80]});
+
+  const bedarfW = s.bedarfWunsch.trim() || 'Keine besonderen Wünsche geäußert.';
+  section('III.','Bedarf',Math.min(boxH(bedarfW,12),80)+10); subBox('1. Bedarf nach Kundenwunsch',bedarfW,12); subBox('2. Bedarf nach Risikoanalyse',textBedarfRisiko(),14);
+  const empf=textEmpfehlung(); section('IV.','Empfehlung / Begründung',Math.min(boxH(empf,14),80)+10); subBox('1. Empfehlung',empf,14); subBox('2. Begründung',textBegruendung(),12);
+
+  section('V.','Kundenentscheidung'); need(10); font('normal',9.5); setC([30,35,48]); doc.text('Der Kunde folgt der Empfehlung:',ML,y); check(ML+62,y,s.entscheidung==='ja','ja'); check(ML+80,y,s.entscheidung==='nein','nein, weil'); y+=6;
+  if(s.entscheidung==='nein') box(s.neinWeil,10);
+  need(22); y+=1; check(ML,y,!!s.consent,''); font('normal',7.8); setC([60,66,80]);
+  const ds=doc.splitTextToSize('Der Kunde erklärt sich damit einverstanden, dass die Daten unter Beachtung der datenschutzrechtlichen Vorschriften (DSGVO/BDSG) zum Zwecke der Weiterverarbeitung bei dem Vermittler auch elektronisch gespeichert und an vom Vermittler empfohlene Produktanbieter oder andere mit ihm vertraglich gebundene Partner zur Antrags- und Vertragsbearbeitung sowie ggf. Archivierung weitergeleitet werden.',CW-7); doc.text(ds,ML+6,y); y+=ds.length*3.4+2;
+  if(!s.consent){ font('bold',7.8); setC(C.accent); doc.text('Einwilligung wurde nicht erteilt.',ML+6,y); y+=4; }
+
+  // Unterschriften: 3 Spalten (1 Kunde) oder 4 Spalten (2 Kunden)
+  const cols = s.zweit ? 4 : 3; const gap=6; const sw=(CW-gap*(cols-1))/cols; need(50); y+=8; const sy=y+24;
+  const sigBlock=(x,label,img,extra)=>{ if(img){ try{ const pr=doc.getImageProperties(img); let w=sw-4,h=w*pr.height/pr.width; if(h>20){ h=20; w=h*pr.width/pr.height; } doc.addImage(img,'PNG',x+(sw-w)/2,sy-h-1,w,h); }catch(e){} }
+    if(extra){ font('normal',9); setC([30,35,48]); doc.text(doc.splitTextToSize(extra,sw),x+1,sy-2); } doc.setDrawColor(...C.navy); doc.setLineWidth(.4); doc.line(x,sy,x+sw,sy); font('normal',7); setC(C.grey); doc.text(doc.splitTextToSize(label,sw),x,sy+3.5); };
+  let cx=ML; sigBlock(cx,'Ort / Datum',null,s.ort+', '+fmtDate(s.datum)); cx+=sw+gap;
+  sigBlock(cx,'Unterschrift Kunde · '+fullName(1),s.sig); cx+=sw+gap;
+  if(s.zweit){ sigBlock(cx,'Unterschrift Kunde · '+fullName(2),s.sig2); cx+=sw+gap; }
+  sigBlock(cx,'Unterschrift Berater · '+berater.name,berater.sig);
+  y=sy+12; font('normal',7.5); setC(C.grey); need(6); doc.text('Elektronisch erstellt am '+new Date().toLocaleString('de-DE')+' · Unterschriften digital erfasst.',ML,y);
+
+  const L=riskLines();
+  if(L.length){ doc.addPage(); y=20; doc.setFillColor(...C.navy); doc.rect(0,0,W,22,'F'); doc.setFillColor(...C.accent); doc.rect(0,22,W,1.2,'F');
+    font('bold',14); setC([255,255,255]); doc.text('Anlage: Risiko-Check',ML,14); font('normal',8.5); setC([200,210,225]); doc.text('Zu Protokoll-Nr. '+s.id+' · '+kundenName()+' · '+fmtDate(s.datum),W-MR,14,{align:'right'}); y=34;
+    text((s.zweit?'Die Kunden haben':'Der Kunde hat')+' die folgenden Lebensbereiche eingeordnet. Die Übersicht zeigt, wo eine Absicherung vorhanden ist, wo ein bestehender Vertrag geprüft werden soll und wo Bedarf besteht.'+(s.zweit?' Personenbezogene Bereiche sind je Person ausgewiesen.':''),ML,{size:9,color:[60,66,80]}); y+=3;
+    const col={ok:[31,138,85],check:[201,138,0],need:[196,61,54],none:[125,135,148]}; const cnt={ok:0,check:0,need:0,none:0}; L.forEach(r=>cnt[r.st]++);
+    const bw=(CW-9)/4; ['need','check','ok','none'].forEach((k,i)=>{ const x=ML+i*(bw+3); doc.setFillColor(...col[k]); doc.rect(x,y,bw,13,'F'); font('bold',13); setC([255,255,255]); doc.text(String(cnt[k]),x+4,y+9); font('normal',8); doc.text(STATUS[k],x+12,y+9); }); y+=19;
+    RISKS.forEach(cat=>{ const items=L.filter(r=>r.cat===cat.cat); if(!items.length) return; need(12); font('bold',10.5); setC(C.navy); doc.text(cat.cat,ML,y); y+=2; doc.setDrawColor(...C.navy); doc.setLineWidth(.5); doc.line(ML,y,W-MR,y); y+=5;
+      items.forEach(r=>{ const expl=r.st==='need'?r.need:(r.st==='check'?'Bestehender Vertrag wird auf Leistung und Beitrag geprüft.':(r.st==='ok'?'Absicherung vorhanden.':'Als nicht relevant eingestuft.'));
+        font('normal',8.5); const el=doc.splitTextToSize(expl+(r.info?' – '+r.info:''),CW-42); const h=Math.max(9,el.length*3.6+5); need(h);
+        doc.setFillColor(...col[r.st]); doc.rect(ML,y+.5,3,3,'F'); font('bold',9.5); setC([30,35,48]); doc.text(r.label,ML+6,y+3.5); font('bold',7.5); setC(col[r.st]); doc.text(STATUS[r.st].toUpperCase(),W-MR,y+3.5,{align:'right'});
+        font('normal',8.5); setC([60,66,80]); doc.text(el,ML+6,y+8); y+=h+1; doc.setDrawColor(...C.line); doc.setLineWidth(.2); doc.line(ML,y-.5,W-MR,y-.5); y+=1.5; }); y+=3; });
+    need(16); y+=2; text('Hinweis: Die Einordnung beruht auf den Angaben der Kunden und ersetzt keine Prüfung der Vertragsunterlagen. Empfehlung und Begründung siehe Protokoll, Abschnitt IV.',ML,{size:8,color:C.grey}); }
+
+  const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setDrawColor(...C.line); doc.setLineWidth(.3); doc.line(ML,H-14,W-MR,H-14); font('normal',7.5); setC(C.grey);
+    doc.text(F.name+' · '+F.anschrift+' · '+F.web+(berater.register?' · Reg.-Nr. '+berater.register:''),ML,H-9.5); doc.text('Erstellt am '+new Date().toLocaleDateString('de-DE')+' · Seite '+i+' von '+n,W-MR,H-9.5,{align:'right'}); }
+  return doc;
+}
+
+/* =====================================================================
+   BERATER-COCKPIT
+   ===================================================================== */
+const LSP='bp_berater_v4'; let sigProfil=null; let currentLink='';
+function initCockpit(){
+  $('kunde').style.display='none'; $('cockpit').classList.add('active'); $('nav').style.display='none'; $('progress').style.display='none';
+  $('brandSub').textContent='Berater-Cockpit · Protokoll-Links erstellen';
+  let p={}; try{ p=JSON.parse(localStorage.getItem(LSP)||'{}'); }catch(e){}
+  ['pVorname','pNachname','pEmail','pTelefon','pRegister'].forEach(id=>{ $(id).value=p[id]||''; });
+  sigProfil=new SigPad($('sigProfil'),$('sigProfilWrap'),()=>{ $('sigProfilStatus').textContent = sigProfil.isEmpty()?'':'Unterschrift erfasst'; });
+  setTimeout(()=>{ sigProfil.resize(); if(p.strokes&&p.strokes.length){ sigProfil.setStrokes(p.strokes); $('sigProfilStatus').textContent='Unterschrift erfasst'; } },50);
+  $('btnSigProfilClear').addEventListener('click',()=>sigProfil.clear());
+  $('cErstinfo').value=today();
+  $('btnProfileSave').addEventListener('click',saveCockpitProfile);
+  $('btnMakeLink').addEventListener('click',makeLink);
+  $('btnCopy').addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(currentLink); toast('Link kopiert'); }catch(e){ const r=document.createRange(); r.selectNodeContents($('linkText')); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Bitte markierten Link kopieren'); } });
+  $('btnWa').addEventListener('click',()=>{ const tel=($('cTelefon').value||'').replace(/\D/g,'').replace(/^0/,'49'); window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(waText()),'_blank'); });
+  $('btnMail').addEventListener('click',()=>{ location.href='mailto:'+encodeURIComponent($('cEmail').value||'')+'?subject='+encodeURIComponent('Ihr Beratungsprotokoll – bitte prüfen und unterschreiben')+'&body='+encodeURIComponent(waText()); });
+  $('btnPreview').addEventListener('click',()=>window.open(currentLink,'_blank'));
+  $('btnQr').addEventListener('click',showQr);
+}
+function waText(){ const kv=$('cVorname').value.trim(), kv2=$('cVorname2').value.trim(); const anrede = kv ? 'Hallo '+kv+(kv2?' und '+kv2:'')+',' : 'Guten Tag,';
+  return anrede+'\n\nvielen Dank für unser Gespräch. Unter folgendem Link können Sie Ihr Beratungsprotokoll in vier kurzen Schritten prüfen, Ihre Entscheidung treffen und unterschreiben – das dauert nur wenige Minuten:\n\n'+currentLink+'\n\nSie erhalten anschließend automatisch eine Kopie per E-Mail.\n\nViele Grüße\n'+$('pVorname').value+' '+$('pNachname').value+'\n'+CONFIG.firma.name; }
+function cockpitProfile(){ const p={}; ['pVorname','pNachname','pEmail','pTelefon','pRegister'].forEach(id=>p[id]=$(id).value.trim()); p.strokes=sigProfil.getStrokes(); p.sigCode=p.strokes.length?sigToCode(p.strokes):''; return p; }
+function saveCockpitProfile(){
+  const p=cockpitProfile(); const miss=[]; [['pVorname','Vorname'],['pNachname','Nachname'],['pEmail','E-Mail']].forEach(([id,l])=>{ const bad=!p[id]; $(id).closest('.field').classList.toggle('invalid',bad); if(bad) miss.push(l); });
+  if(!miss.length && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.pEmail)){ $('pEmail').closest('.field').classList.add('invalid'); miss.push('gültige E-Mail'); }
+  if(miss.length){ setStatus('profileStatus','err','Bitte noch ergänzen: '+miss.join(', ')); return false; }
+  localStorage.setItem(LSP,JSON.stringify(p));
+  setStatus('profileStatus', p.sigCode?'ok':'info', p.sigCode ? 'Gespeichert. Ihre Unterschrift wird in jeden Link eingebettet und erscheint im Protokoll.' : 'Gespeichert. Hinweis: Ohne Unterschrift bleibt das Berater-Feld im Protokoll leer.');
+  return true;
+}
+function makeLink(){
+  if(!saveCockpitProfile()){ $('btnProfileSave').scrollIntoView({behavior:'smooth',block:'center'}); return; } const p=cockpitProfile();
+  const q=new URLSearchParams(); q.set('b',p.pVorname+' '+p.pNachname); q.set('be',p.pEmail); if(p.pTelefon) q.set('bt',p.pTelefon); if(p.pRegister) q.set('br',p.pRegister); if(p.sigCode) q.set('bs',p.sigCode);
+  const v=id=>$(id).value.trim(); if(v('cVorname')) q.set('kv',v('cVorname')); if(v('cNachname')) q.set('kn',v('cNachname')); if(v('cEmail')) q.set('ke',v('cEmail')); if(v('cVorname2')) q.set('kv2',v('cVorname2')); if(v('cNachname2')) q.set('kn2',v('cNachname2'));
+  const a=[$('aK').checked?'k':'',$('aR').checked?'r':'',$('aS').checked?'s':''].filter(Boolean); q.set('a',a.join(',')||'r'); if(v('cAnlassText')) q.set('at',v('cAnlassText')); if($('cErstinfo').value) q.set('ei',$('cErstinfo').value);
+  currentLink=location.origin+location.pathname+'?'+q.toString(); $('linkText').textContent=currentLink; $('linkCard').style.display='block'; $('qr').innerHTML=''; $('linkCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function showQr(){ const draw=()=>{ $('qr').innerHTML=''; new QRCode($('qr'),{text:currentLink,width:220,height:220,correctLevel:QRCode.CorrectLevel.L}); };
+  if(window.QRCode) return draw(); const sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload=draw; sc.onerror=()=>toast('QR-Bibliothek konnte nicht geladen werden'); document.head.appendChild(sc); }
+
+/* =====================================================================
+   START
+   ===================================================================== */
+if(IS_COCKPIT) initCockpit(); else initKunde();
+</script>
+</body>
+</html>
